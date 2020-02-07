@@ -10,6 +10,7 @@ app = Celery(
 class Config:
     CELERY_IMPORTS = (
         'asynchronous.failed_retry_tasks',  # 任务失败重试
+        'asynchronous.exchange_tasks',  # 多任务，多队列
     )
     CELERY_TIMEZONE = 'Asia/Shanghai'
 
@@ -25,36 +26,33 @@ class Config:
     # celery worker每次去redis取任务的数量，默认值就是4
     CELERY_PREFETCH_MULTIPLIER = 4
 
-    # # 配置队列（settings.py）
-    # CELERY_QUEUES = (
-    #     Queue('default',
-    #           Exchange('default'),
-    #           routing_key='default'),
-    #     Queue('for_task_collect',
-    #           Exchange('for_task_collect'),
-    #           routing_key='for_task_collect'),
-    #     Queue('for_task_compute',
-    #           Exchange('for_task_compute'),
-    #           routing_key='for_task_compute'),
-    # )
-    # # 路由（哪个任务放入哪个队列）
-    # CELERY_ROUTES = {
-    #     'umonitor.tasks.multiple_thread_metric_collector':
-    #         {
-    #             'queue': 'for_task_collect',
-    #             'routing_key': 'for_task_collect'
-    #         },
-    #     'compute.tasks.multiple_thread_metric_aggregate':
-    #         {
-    #             'queue': 'for_task_compute',
-    #             'routing_key': 'for_task_compute'
-    #         },
-    #     'compute.tasks.test':
-    #         {
-    #             'queue': 'for_task_compute',
-    #             'routing_key': 'for_task_compute'
-    #         },
-    # }
+    # 配置队列
+    CELERY_QUEUES = (
+        Queue('default', Exchange('default'), routing_key='default'),
+        Queue('infinite_worker', Exchange('infinite_worker'), routing_key='infinite_worker'),
+        Queue('info', Exchange('project_logs', type='direct'), routing_key='info'),
+        Queue('error', Exchange('project_logs', type='direct'), routing_key='error'),
+    )
+    CELERY_DEFAULT_QUEUE = 'default'
+    CELERY_DEFAULT_EXCHANGE = 'default'
+    CELERY_DEFAULT_ROUTING_KEY = 'default'
+
+    # 任务绑定
+    #   将任务绑定到交换机上，需要指明 routing_key，根据 routing_key 进行路由
+    #   将任务直接绑定到队列中可以不指明 routing_key
+    CELERY_ROUTES = {
+        # 将任务绑定到交换机上，需要指明 routing_key，根据 routing_key 进行路由
+        'asynchronous.exchange_tasks.case2':
+            {
+                'exchange': 'infinite_worker',
+                'routing_key': 'infinite_worker'
+            },
+        # 将任务直接绑定到队列中可以不指明 routing_key
+        'asynchronous.exchange_tasks.case3':
+            {
+                'queue': 'info',
+            },
+    }
 
 
 app.config_from_object(Config)
