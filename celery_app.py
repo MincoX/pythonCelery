@@ -11,13 +11,14 @@ class Config:
     CELERY_IMPORTS = (
         'asynchronous.failed_retry_tasks',  # 任务失败重试
         'asynchronous.exchange_tasks',  # 多任务，多队列
+        'asynchronous.test',  # 测试
     )
     CELERY_TIMEZONE = 'Asia/Shanghai'
 
-    # 任务过期时间，不建议直接写86400，应该让这样的magic数字表述更明显
+    # 存储的结果被删除的时间（秒数，或者一个 timedelta 对象）
     CELERY_TASK_RESULT_EXPIRES = 60 * 60 * 24
-    # 单个任务的运行时间限制，否则会被杀死
-    CELERY_TASK_TIME_LIMIT = 60
+    # 单个任务的运行时间限制，否则会被杀死（单位为：秒，windows 下无效）
+    CELERYD_TASK_TIME_LIMIT = 60 * 60
     # 每个worker执行了多少任务就会死掉，默认是无限的
     CELERY_MAX_TASKS_PER_CHILD = 200
 
@@ -25,6 +26,10 @@ class Config:
     CELERY_CONCURRENCY = 2
     # celery worker每次去redis取任务的数量，默认值就是4
     CELERY_PREFETCH_MULTIPLIER = 4
+
+    # 4.4.0 新增特性
+    CONTROL_QUEUE_EXPIRES = None
+    CONTROL_QUEUE_TTL = None
 
     # 配置队列
     CELERY_QUEUES = (
