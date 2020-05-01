@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 from celery import Celery
 from kombu import Queue, Exchange
+from celery.schedules import crontab
 
 app = Celery(
     broker='amqp://MincoX:mincoroot@49.232.19.51:5672//',
@@ -8,6 +11,7 @@ app = Celery(
 
 
 class Config:
+    # 导入/注册 异步任务
     CELERY_IMPORTS = (
         'asynchronous.failed_retry_tasks',  # 任务失败重试
         'asynchronous.exchange_tasks',  # 多任务，多队列
@@ -31,7 +35,7 @@ class Config:
     CONTROL_QUEUE_EXPIRES = None
     CONTROL_QUEUE_TTL = None
 
-    # 配置队列
+    # 声明交换机、队列以及交换机队列的绑定
     CELERY_QUEUES = (
         Queue('default', Exchange('default'), routing_key='default'),
         Queue('infinite_worker', Exchange('infinite_worker'), routing_key='infinite_worker'),
@@ -42,9 +46,10 @@ class Config:
     CELERY_DEFAULT_EXCHANGE = 'default'
     CELERY_DEFAULT_ROUTING_KEY = 'default'
 
-    # 任务绑定
-    #   将任务绑定到交换机上，需要指明 routing_key，根据 routing_key 进行路由
-    #   将任务直接绑定到队列中可以不指明 routing_key
+    # 配置文件中对异步任务进行与交换机、队列的绑定
+    #   1. 默认交换机 "" 都是通过 direct 方式进行转发
+    #   2. 所有的队列都默认绑定一个与队列名相同的 routing_key，以便默认交换机进行匹配转发
+    #   3. 对于没有指定交换机名称的任务，都会发送给默认交换机 ""，由默认交换机 "" 进行转发到对应的队列中
     CELERY_ROUTES = {
         # 将任务绑定到交换机上，需要指明 routing_key，根据 routing_key 进行路由
         'asynchronous.exchange_tasks.case2':
@@ -52,11 +57,33 @@ class Config:
                 'exchange': 'infinite_worker',
                 'routing_key': 'infinite_worker'
             },
-        # 将任务直接绑定到队列中可以不指明 routing_key
+        # 将任务直接绑定到队列中
+        #   1. 未指明交换机，通过默认交换机 "" 进行转发给 info 队列
+        #   2. 默认交换机会根据队列的名字进行 routing_key 匹配转发
+        #   3. 默认每一个队列都绑定一个与名称相同的 routing_key
         'asynchronous.exchange_tasks.case3':
             {
                 'queue': 'info',
             },
+    }
+
+    # 配置定时任务
+    CELERYBEAT_SCHEDULE = {
+        'beat_task_name': {
+            'task': 'asynchronous.exchange_tasks.schedule',
+            # 'schedule': crontab(minute='*/1', hour='*/6'),
+            'schedule': timedelta(seconds=5),
+            'args': "",
+            # 指明交换机，根据 routing_key 转发
+            'options': {
+                'exchange': 'infinite_worker',
+                'routing_key': 'infinite_worker'
+            },
+            # 指明 queue, 由默认交换机转发到此队列
+            # 'options': {
+            #     'queue': 'infinite_worker',
+            # },
+        }
     }
 
 

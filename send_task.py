@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from abstract_task.debug_task import DebugTask
 from asynchronous import failed_retry_tasks, exchange_tasks
 
 CTIME = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -31,11 +32,14 @@ if __name__ == '__main__':
     # exchange_tasks.case4.apply_async(
     #     exchange='project_logs',
     #     routing_key='error',
-    #     # queue='error'
     # )
     # ########################## 多任务，多队列 ############################
     # ########################## 测试配置文件 ############################
-    from asynchronous import test
+    # from asynchronous import test
 
-    test.test1.delay()
+    # test.test1.delay()
+    # test.test2.apply_async(
+    #     base=DebugTask
+    # )
     # ########################## 测试配置文件 ############################
+    pass

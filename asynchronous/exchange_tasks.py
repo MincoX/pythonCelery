@@ -1,13 +1,14 @@
 from datetime import datetime
 
 from celery_app import app
+from abstract_task.debug_task import DebugTask
 
 """ 多任务多队列的意义在于: 
         在多台服务器上通过 -Q 参数开启指定的 worker, 将任务分发到不同的服务器上执行，减少服务器的压力，提高效率 
 """
 
 
-@app.task(bind=True)
+@app.task(bind=True, base=DebugTask)
 def case1(self):
     """
     任务没有绑定队列, 走默认队列
@@ -17,9 +18,8 @@ def case1(self):
     # print(dir(self))
     # print("self.request", self.request)
 
-    print('case1 >>> 任务交换机：{}，任务队列：{}，routing_key：{}'.format(
+    print('case1 >>> 任务交换机：{}，routing_key：{}'.format(
         self.request.delivery_info['exchange'],
-        self.request.delivery_info['priority'],
         self.request.delivery_info['routing_key'],
     ))
 
@@ -35,9 +35,8 @@ def case2(self):
     :param self:
     :return:
     """
-    print('case2 >>> 任务交换机：{}，任务队列：{}，routing_key：{}'.format(
+    print('case2 >>> 任务交换机：{}，routing_key：{}'.format(
         self.request.delivery_info['exchange'],
-        self.request.delivery_info['priority'],
         self.request.delivery_info['routing_key'],
     ))
 
@@ -53,9 +52,8 @@ def case3(self):
     :param self:
     :return:
     """
-    print('case3 >>> 任务交换机：{}，任务队列：{}，routing_key：{}'.format(
+    print('case3 >>> 任务交换机：{}，routing_key：{}'.format(
         self.request.delivery_info['exchange'],
-        self.request.delivery_info['priority'],
         self.request.delivery_info['routing_key'],
     ))
 
@@ -71,12 +69,22 @@ def case4(self):
     :param self:
     :return:
     """
-    print('case4 >>> 任务交换机：{}，任务队列：{}，routing_key：{}'.format(
+    print('case4 >>> 任务交换机：{}，routing_key：{}'.format(
         self.request.delivery_info['exchange'],
-        self.request.delivery_info['priority'],
         self.request.delivery_info['routing_key'],
     ))
 
     res = '任务执行成功: {}'.format(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
     return res
+
+
+@app.task(bind=True)
+def schedule(self):
+
+    print('case1 >>> 任务交换机：{}，routing_key：{}'.format(
+        self.request.delivery_info['exchange'],
+        self.request.delivery_info['routing_key'],
+    ))
+
+    print(f'定时任务开始执行 {datetime.today()}')

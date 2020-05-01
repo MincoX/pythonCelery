@@ -30,7 +30,7 @@ def case1(self, **kwargs):
 @app.task(bind=True, autoretry_for=(IndexError,), retry_kwargs={'max_retries': 3, 'countdown': 5})
 def case2(self, **kwargs):
     """ 版本 4.0 中的新功能
-    autoretry_for: 针对指定异常自动重试任务
+    autoretry_for: 针对指定异常自动重试任务, 此任务中只针对 IndexError 才会进行任务重试
     retry_kwargs: 任务重试参数
         max_retries： 最大重试次数
         countdown： 每一次失败重复执行的时间间隔
